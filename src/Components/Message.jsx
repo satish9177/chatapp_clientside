@@ -7,8 +7,7 @@ import { IoMdAdd } from "react-icons/io";
 import { IoSend } from "react-icons/io5";
 import uploadFile from "../uploadimage/upload";
 import { IoMdClose } from "react-icons/io";
-import Spinner from "../Pages/Spinner";
-import Messagepage from "./Messagepage"; 
+import Spinner from "../Pages/Spinner"; 
 import moment from 'moment'
 const Message = () => {
   const [conversation,setconversation]=useState([]);
