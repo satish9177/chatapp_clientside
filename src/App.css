@@ -1,0 +1,14 @@
+.scrollbar::-webkit-scrollbar{
+  width: 5px;
+}
+.scrollbar::-webkit-scrollbar-track{
+  @apply bg-slate-100
+}
+.scrollbar::-webkit-scrollbar-thumb{
+  @apply bg-slate-100 rounded-full
+}
+.backgroundimage{
+  background-image: url('./assest/wallapaper\ .jpeg');
+  background-repeat: no-repeat;
+  background-size: cover;
+}
