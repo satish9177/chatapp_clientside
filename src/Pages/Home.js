@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import URL from "../api";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,10 +15,14 @@ import { IoMdClose } from "react-icons/io";
 import { GoArrowUpLeft } from "react-icons/go";
 import logo from "../assest/logo.jpeg";
 import Io from 'socket.io-client'
+import { MdPhotoSizeSelectActual } from "react-icons/md";
+import { IoVideocam } from "react-icons/io5";
 const Home = () => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const[sidebar,setsidebar]=useState([]);
   const user = useSelector((state) => state.user);
+  const socket=useSelector((state)=>state.user.socketconnection)
   // const user = location?.state;
   const path=location.pathname==='/'
   console.log("userda:", user);
@@ -26,10 +30,18 @@ const Home = () => {
   const nav = useNavigate();
   const [update, setupdate] = useState(false);
   const [addFriend, setaddFriend] = useState(false);
-  console.log("user-inhome:", user);
+  // console.log("user-inhome:", user);
   // if(user?.email===''){
   //   nav('/email');
   // }
+  useEffect(()=>{
+    if(socket){
+      socket.emit('sidebar',user?._id)
+      socket.on('conversationsidebar',(data)=>{
+        setsidebar(data)
+      })
+    }
+  },[socket,user])
   const fetched = async () => {
     // console.log('fgf');
     // setuser(pt);
@@ -139,7 +151,7 @@ const Home = () => {
             Message
           </div>
           <div className="scrollbar overflow-x-hidden overflow-y-scroll h-screen text-gray-400">
-            <div className="flex justify-center flex-col items-center ">
+          { sidebar.length===0&& <div className="flex justify-center flex-col items-center ">
               <div className="text-8xl font-medium ">
                 {" "}
                 <GoArrowUpLeft />
@@ -148,7 +160,67 @@ const Home = () => {
               <p className="text-lg font-medium ml-8">
                 Explore users for More Conversations with,
               </p>
-            </div>
+            </div>}
+            {
+              sidebar.length>0 &&(
+               <> 
+               <div className="flex flex-col ">
+               {
+                 sidebar.map((data)=>{
+                   return(
+                   // <div key={data.receiver._id} className="flex flex-row  ">
+                      <>
+                     {
+                       data.receiver._id!==user._id ?(
+                         <NavLink to={'/'+data.receiver?._id} className="flex flex-row border-2 px-2 py-1 hover:border-green-400">
+                       <div className="w-16">
+                         <Profilepic
+                         Id={data.receiver?._id}
+                         username={data.receiver?.username}
+                         profilepic={data.receiver?.profile_pic}
+                         w={55}
+                       /></div>
+                       <div className="flex flex-col w-20">
+                       <div className="font-semibold text-ellipsis line-clamp-1">{data.receiver?.username}</div>
+                       <div className="font-normal text-ellipsis line-clamp-1">{data?.lastmessage?.text}</div>
+                    
+                       {data?.lastmessage?.ImageUrl && <div className="flex flex-row text-sm items-center gap-1"><span><MdPhotoSizeSelectActual/></span> <span>photo</span></div>}
+                       {data?.lastmessage?.VideoUrl && <div className="flex flex-row text-sm items-center gap-1 text-center"><span><IoVideocam /></span> <span>video</span></div>}
+                       </div>
+                       <div className="rounded-full bg-green-800 px-2 py-1 text-sm  h-fit ml-auto">{data.unseen}</div>
+                       </NavLink>
+                       ):<></>
+                     }
+                      {
+                       data.sender._id!==user._id? ( 
+                         <NavLink to={'/'+data.sender?._id} className="flex flex-row border-2 px-2 py-1 hover:border-green-400">
+                       <div className="w-16">
+                         <Profilepic
+                         Id={data.sender?._id}
+                         username={data.sender?.username}
+                         profilepic={data.sender?.profile_pic}
+                         w={55}
+                       />
+                       </div>
+                       <div className="flex flex-col w-20">
+                       <div className="font-semibold text-ellipsis line-clamp-1">{data.sender?.username}</div>
+                       <div className="font-normal text-ellipsis line-clamp-1">{data?.lastmessage?.text}</div>
+                       {data?.lastmessage?.ImageUrl && <div className="flex flex-row text-sm"><span><MdPhotoSizeSelectActual/></span> <span>photo</span></div>}
+                       {data?.lastmessage?.VideoUrl && <div className="flex flex-row text-sm items-center gap-1 text-center"><span><IoVideocam /></span> <span>video</span></div>}
+                       </div>
+                       <div className="rounded-full bg-green-800 px-2 py-1 text-sm  h-fit ml-auto">{data.unseen}</div>
+                       </NavLink>
+                     ):(<></>)
+                      } 
+                      </> 
+                   // {/* // </div>) */}
+                  )
+               } )
+              }
+            </div> 
+            </>
+              )
+            }
           </div>
         </div>
       </aside>

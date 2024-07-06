@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import Profilepic from "../uploadimage/profilepic";
@@ -10,18 +10,26 @@ import { IoMdClose } from "react-icons/io";
 import Spinner from "../Pages/Spinner"; 
 import moment from 'moment'
 const Message = () => {
+  const scroll=useRef(null)
+ 
   const [conversation,setconversation]=useState([]);
   const [upload, setupload] = useState({
     text: "",
     photo: "",
     video: "",
   });
+  useEffect(()=>{
+     if(scroll.current){
+      scroll.current.scrollIntoView({behavior:'smooth',block:'end'})
+     }
+  },[conversation])
   const [file, setfile] = useState(false);
   const [loading, setloading] = useState(false);
   const socket = useSelector((state) => state?.user?.socketconnection);
   const user=useSelector((state)=>state?.user)
   const params = useParams();
   const [userdata, setuserdata] = useState({
+    _id:'',
     username: "",
     email: "",
     profilepic: "",
@@ -29,21 +37,22 @@ const Message = () => {
   });
   const userId = params.userId;
   useEffect(() => {
+    console.log('hello')
     if (socket) {
-      // console.log(socket);
-      socket.emit("userId", userId);
+      console.log(socket);
+      socket.emit("userId", params.userId);
       socket.on("user_data", (user) => {
-        // console.log(user);
-        setuserdata({
-          username: user.username,
-          email: user.email,
-          profilepic: user.profile_pic,
-          online: user.online,
-        });
+        console.log("userpp:",user);
+        setuserdata(user);
       });
+      socket.on('messages',(data)=>{
+        console.log("conversation:",data)
+        setconversation(data);
+      })
     }
-  }, [socket,userId]);
+  }, [socket,params.userId,user]);
   const Handlephoto = async (e) => {
+    console.log('photo:',e.target.files[0])
     const file = e.target.files[0];
     setloading(true)
     const photo = await uploadFile(file);
@@ -65,13 +74,13 @@ const Message = () => {
       video: video.url,
     });
   };
-  // console.log(upload);
+  console.log("upload:",upload);
   const Handlesend=(e)=>{
     if(upload.photo!=='' || upload.text!=='' || upload.video!==''){
       if(socket){
         const data={
           sender:user?._id,
-          receiver:userId,
+          receiver:params.userId,
           text:upload.text,
           ImageUrl:upload.photo,
           VideoUrl:upload.video,
@@ -97,7 +106,7 @@ const Message = () => {
           {" "}
           <div>
             <Profilepic
-              Id={userId}
+              Id={userdata?._id}
               username={userdata?.username}
               profilepic={userdata?.profilepic}
               w={55}
@@ -117,17 +126,22 @@ const Message = () => {
         </div>
       </div>
       {/* messages */}
-      <div className=" h-[582px] gap-1 flex flex-col p-2 scrollbar  overflow-y-scroll">
+      <div  className=" h-[582px]   scrollbar  overflow-y-scroll " >
+        <div className="flex flex-col gap-1 p-2 " ref={scroll}>
          {
-          conversation.length>0?conversation.map((conv)=>{
+          conversation?.length>0?conversation.map((conv)=>{
             return(
-              <div className={`bg-gray-200 p-2 w-fit min-w-10 ${conv.mesgByUserId===user?._id && 'ml-auto bg-emerald-300'}`}>
-                <div>{conv.text}</div>
+              <div className={`bg-gray-200 p-2 w-fit min-w-10 rounded-md ${conv.mesgByUserId===user?._id && 'ml-auto bg-emerald-300'}`}>
+               {conv.ImageUrl && <div className=""> <img src={conv.ImageUrl} alt="img" width={200} height={250}/></div>
+               }
+               {conv.VideoUrl && <div> <video src={conv.VideoUrl} controls width={200} height={250}/></div>}
+                {<div>{conv.text}</div>}
+                 
                 <div className="ml-auto w-fit text-xs">{moment(conv.createdAt).format('hh:mm a')}</div>
               </div>
             )
           }):<></>
-         }
+         }</div>
       </div>
       <div className="flex flex-row bg-white m-0">
         <div
@@ -156,7 +170,8 @@ const Message = () => {
           <label
             htmlFor="video"
             className="w-full hover:bg-gray-300 cursor-pointer"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation()
               setfile(false);
             }}
           >
@@ -165,16 +180,19 @@ const Message = () => {
           <label
             htmlFor="image"
             className="w-full hover:bg-gray-300 cursor-pointer"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation()
               setfile(false);
-            }}>
+            }}
+             >
             <span className="text-lg font-normal px-3 ">Image</span>
           </label>
           <input
             id="image"
             type="file"
-            className="hidden"
             onChange={Handlephoto}
+            className="hidden"
+            
           />
           <input
             id="video"

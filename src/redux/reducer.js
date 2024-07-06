@@ -24,8 +24,11 @@ const initialState={
     setLogout:(state,action)=>{
       state._id=''
       state.username=''
+      state.profile_pic=''
       state.email=''
       state.token=''
+      state.onlineuser=''
+      state.socketconnection=''
     },
     setOnlineuser:(state,action)=>{
       state.onlineuser=action.payload
